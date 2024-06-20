@@ -1,0 +1,57 @@
+Backup:
+  savefolder_path: files
+  database_key: 
+
+RSS:
+  url: 233
+  key: 233333
+
+
+Email:
+  enable_email_notify: 1
+  sender: 233
+  receivers: 233
+  smtp_host: 233
+  smtp_port: 233
+  mail_license: 114514
+  send_logs: 1
+
+onedrive:
+  enable_od_upload: 0
+  od_client_id: 114514
+  od_client_secret: 114514
+  od_redirect_uri: 114514
+  od_upload_dir: abcd # relative to root， do not use '/' at the beginning
+
+
+BiliBili:
+  users:
+    - uid: "23333333"
+      name: "someone"
+      collections:
+        - fid: "114514"
+          name: "沼气实验室"
+          max_ep: 30
+
+        # - fid: "1919810"
+        #   name: "哲学"
+        #   max_ep: 30
+
+        # - fid: "col2"
+        #   name: "Collection2"
+        #   max_ep: 30
+
+        # - fid: "col2"
+        #   name: "Collection2"
+        #   max_ep: 30
+
+        # - fid: "col2"
+        #   name: "Collection2"
+        #   max_ep: 30                    
+
+    # - uid: "233333332"
+    #   name: "User2"
+    #   collections:
+    #     - fid: "col3"
+    #       name: "Collection1"
+            # max_ep: 30    

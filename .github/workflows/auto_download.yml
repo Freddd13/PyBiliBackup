@@ -1,0 +1,79 @@
+name: auto download
+
+on:
+  workflow_dispatch: 
+  schedule:
+    - cron: '0 8 * * *'
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.x  # 指定 Python 版本
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Install ffmpeg
+      run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+    - name: Run Python script
+      env:
+        BILIBILI_BACKUP_ENV: GITHUB_ACTION
+
+        Backup_savefolder_path: ${{ secrets.Backup_savefolder_path }}
+
+        RSS_url: ${{ secrets.RSS_url }}
+        RSS_url_key: ${{ secrets.RSS_url_key }}
+        RSS_max_days_difference: ${{ secrets.RSS_max_days_difference }}
+        RSS_max_trial_num: ${{ secrets.RSS_max_trial_num }}
+        
+        enable_email_notify: ${{ secrets.enable_email_notify }}
+        Email_sender: ${{ secrets.Email_sender }}
+        Email_receivers: ${{ secrets.Email_receivers }}
+        Email_smtp_host: ${{ secrets.Email_smtp_host }}
+        Email_smtp_port: ${{ secrets.Email_smtp_port }}
+        Email_mail_license: ${{ secrets.Email_mail_license }}
+        Email_send_logs: ${{ secrets.Email_send_logs }}
+
+        enable_od_upload:  ${{ secrets.enable_od_upload }}
+        od_client_id:  ${{ secrets.od_client_id }}
+        od_client_secret:  ${{ secrets.od_client_secret }}
+        od_redirect_uri:  ${{ secrets.od_redirect_uri }}
+        od_upload_dir:  ${{ secrets.od_upload_dir }}
+
+        BiliBili_users: ${{ secrets.BiliBili_users }}
+        Backup_database_key: ${{ secrets.Backup_database_key }}
+
+        # GITHUB_REPO_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+        # REPO_NAME: ${{ github.event.repository.name }}  # https://stackoverflow.com/questions/62803531/repository-name-as-a-github-action-environment-variable
+        # GITHUB_OWNER_REPO: ${{ github.repository }}
+        # LAST_SUCCESS_VIDEO_TIME: ${{ vars.LAST_SUCCESS_VIDEO_TIME }}
+
+        IGNORE_HISTORY_DOWNLOAD: 1
+
+      run: python main.py
+
+    - name: Setup GIT user
+      uses: fregante/setup-git-user@v1
+
+    - name: Save last success time
+      run: |
+        python./bili_backup/safety/encrypt_file.py
+        git add .
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Update last success time"
+          git push
+        fi
