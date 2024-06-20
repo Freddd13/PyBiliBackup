@@ -68,6 +68,8 @@ jobs:
       uses: fregante/setup-git-user@v1
 
     - name: Save last success time
+      env:
+        BILIBILI_BACKUP_ENV: GITHUB_ACTION    
       run: |
         python encrypt_file.py
         git add .
