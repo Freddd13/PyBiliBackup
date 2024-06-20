@@ -32,7 +32,7 @@ docker run -d --name pybilibackup \
 -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
 -v $(pwd)/pybilibackup/files:/app/files \
 -v $(pwd)/pybilibackup/database:/app/database \
-fredyu13/pybilibackup:main
+fredyu13/pybilibackup:latest
 
 # docker exec -it {container_id} /bin/bash 
 ```
