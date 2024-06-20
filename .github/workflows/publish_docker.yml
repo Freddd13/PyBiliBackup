@@ -34,5 +34,6 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: fredyu13/pybilibackup:latest
+          # tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

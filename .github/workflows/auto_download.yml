@@ -44,7 +44,7 @@ jobs:
       # LAST_SUCCESS_VIDEO_TIME: ${{ vars.LAST_SUCCESS_VIDEO_TIME }}
 
       IGNORE_HISTORY_DOWNLOAD: 1
-      
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -74,5 +74,5 @@ jobs:
           echo "No changes to commit"
         else
           git commit -m "Update last success time"
-          git push
+          git push -f
         fi
