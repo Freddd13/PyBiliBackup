@@ -1,8 +1,8 @@
 from cryptography.fernet import Fernet
 import os
 
-DB_plaintext_path = "./database.db"
-DB_encrypted_path = "./database.encdb"
+DB_plaintext_path = "database/database.db"
+DB_encrypted_path = "database/database.encdb"
 
 def load_key():
     return os.getenv("Backup_database_key").encode()

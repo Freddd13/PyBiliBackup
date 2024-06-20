@@ -31,7 +31,7 @@ touch pybilibackup/_last_download_signal
 docker run -d --name pybilibackup \
 -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
 -v $(pwd)/pybilibackup/files:/app/files \
--v $(pwd)/pybilibackup/database:/app/_last_download_signal \
+-v $(pwd)/pybilibackup/database:/app/database \
 fredyu13/pybilibackup:main
 
 # docker exec -it {container_id} /bin/bash 
