@@ -31,7 +31,7 @@ touch pybilibackup/_last_download_signal
 docker run -d --name pybilibackup \
 -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
 -v $(pwd)/pybilibackup/files:/app/files \
--v $(pwd)/pybilibackup/_last_download_signal:/app/_last_download_signal \
+-v $(pwd)/pybilibackup/database:/app/_last_download_signal \
 fredyu13/pybilibackup:main
 
 # docker exec -it {container_id} /bin/bash 
@@ -100,8 +100,8 @@ The `enable_email_notify` is used to send you downloading result including sheet
 
 ## TODO
 - [x] docker
-- [ ] fix local storage check
-- [ ] fix bug when remaining history files
+- [x] fix local storage check
+- [x] fix bug when remaining history files
 - [ ] add retry history failed videos
 - [ ] backup summary
 - [ ] config from gist
