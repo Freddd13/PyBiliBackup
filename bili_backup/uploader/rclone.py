@@ -4,6 +4,7 @@ from ..utils.utils import delete_contents, delete_contents_keep_structure
 
 import requests
 import os
+import time
 import subprocess
 
 log_manager = LoggerManager(f"log/{__name__}.log")
@@ -17,10 +18,12 @@ class RClone(BaseRequest):
         self.local_base_path_relative_to_repo = local_base_path_relative_to_repo
         self.remote_base_path_relative_to_repo = remote_base_path_relative_to_repo
 
+        self._rclone_start_timeout = 10
+
     def check_rclone_port(self, port):
         try:
-            response = subprocess.run(["netstat", "-ano"], capture_output=True, text=True)
-            if f":{port}" in response.stdout:
+            response = subprocess.run(["ps", "-A", "|grep", "rclone"], capture_output=True, text=True)
+            if f"rclone" in response.stdout:
                 return True
             else:
                 return False
@@ -30,13 +33,22 @@ class RClone(BaseRequest):
 
     def start_rclone(self):
         if not self.check_rclone_port(self.rclone_port):
-            logger.info("Starting rclone...")
+            logger.info("RClone is not running, starting rclone...")
             os.system("nohup rclone rcd --rc-no-auth >/dev/null 2>&1 &")
-            # subprocess.run(["nohup", "rclone", "rcd", "--rc-no-auth", ">/dev/null", "2>&1", "&"])
+
+            # wait rclone to start
+            start_time = time.time()
+            while not self.check_rclone_port(self.rclone_port):
+                if time.time() - start_time > self._rclone_start_timeout:
+                    logger.error("Failed to start rclone")
+                    return False
+                time.sleep(1)
+                
             if not self.check_rclone_port(self.rclone_port):
                 logger.error("Failed to start rclone")
                 return False
-        logger.info("Rclone is running")
+            else:
+                logger.info("Start Rclone rcd success!")
         return True
 
 
@@ -45,13 +57,15 @@ class RClone(BaseRequest):
             return False
         
         try:
+            logger.info(f"Uploading the following files...\n{'\n'.join(files_to_upload)}")
+
             abs_path = os.path.join(os.getcwd(), self.local_base_path_relative_to_repo)
             url = f"http://127.0.0.1:5572/sync/copy?srcFs={abs_path}&dstFs={self.remote_base_path_relative_to_repo}&createEmptySrcDirs=true"
             response = self._http.post(url)
             response.raise_for_status()
-            print(response.text)
+
             if "{}" in response.text:
-                logger.info(f"Rclone upload success")
+                logger.info(f"Rclone upload {len(files_to_upload)} files successfully")
                 if remove_local:
                     delete_contents(abs_path)
                 return True
