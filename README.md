@@ -11,7 +11,7 @@ Mainly designed for github action on public repos, the database file is simply e
 ## Usage
 
 ### Use Github Action
-0. You need [nonpersonal onedrive](#About-Onedrive) to save your backup data(Otherwise why you choose this method??).
+0. You need [a onedrive with API](#About-Onedrive) to save your backup data(Otherwise why you choose this method??).
 1. Fork the repo
 2. Use your own information to set the needed secrets in your repo(Repo Settings -- Secrets and variables -- Actions -- Secrets). You need an email with SMTP host, port, account and app password. Check out [User config](#User-config) for the full config we need.
 ![](docs/add_secrets.png)
