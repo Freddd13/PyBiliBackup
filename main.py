@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:31
 LastEditors: Kumo
-LastEditTime: 2024-06-21 19:15:12
+LastEditTime: 2024-06-21 22:02:08
 Description: 
 '''
 from bili_backup.cloudreve import Cloudreve
@@ -19,9 +19,9 @@ from bili_backup.onedrive.onedrive import OnedriveManager
 from bili_backup.uploader.onedrive import Onedrive
 from bili_backup.uploader.rclone import RClone
 
-from bili_backup.safety.crypt import *
+from bili_backup.database.safety.crypt import *
+from bili_backup.database.manager import DBManager
 
-import sqlite3
 
 import os
 import time
@@ -38,98 +38,6 @@ max_token_valid_time = 40 * 60  # use 40 minutes
 # other const
 REMOVE_LOCAL_FILES = True
 
-
-###################### db #####################
-def init_db(db_path):
-    """初始化数据库并创建表"""
-    if not os.path.exists(os.path.dirname(db_path)):
-        os.makedirs(os.path.dirname(db_path))
-    
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    # 创建用户表
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            uid TEXT PRIMARY KEY,
-            name TEXT NOT NULL
-        )
-    ''')
-
-    # 创建收藏夹表
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS collections (
-            fid TEXT PRIMARY KEY,
-            uid TEXT NOT NULL,
-            name TEXT NOT NULL,
-            FOREIGN KEY (uid) REFERENCES users (uid)
-        )
-    ''')
-
-    # 创建视频表
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS videos (
-            bv TEXT PRIMARY KEY,
-            title TEXT,
-            url TEXT
-        )
-    ''')
-
-    # 创建收藏夹视频表
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS collection_videos (
-            fid TEXT NOT NULL,
-            bv TEXT NOT NULL,
-            FOREIGN KEY (fid) REFERENCES collections (fid),
-            FOREIGN KEY (bv) REFERENCES videos (bv),
-            PRIMARY KEY (fid, bv)
-        )
-    ''')
-
-    conn.commit()
-    conn.close()
-
-
-def add_user(uid, name, db_path="downloads.db"):
-    """添加用户"""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO users (uid, name) VALUES (?, ?)", (uid, name))
-    conn.commit()
-    conn.close()
-
-def add_collection(fid, uid, name, db_path="downloads.db"):
-    """添加收藏夹"""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO collections (fid, uid, name) VALUES (?, ?, ?)", (fid, uid, name))
-    conn.commit()
-    conn.close()
-
-def add_video(bv, title, url, db_path="downloads.db"):
-    """添加视频"""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO videos (bv, title, url) VALUES (?, ?, ?)", (bv, title, url))
-    conn.commit()
-    conn.close()
-
-def add_video_to_collection(fid, bv, db_path="downloads.db"):
-    """将视频添加到收藏夹"""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("INSERT OR IGNORE INTO collection_videos (fid, bv) VALUES (?, ?)", (fid, bv))
-    conn.commit()
-    conn.close()
-
-def is_video_downloaded(bv, db_path="downloads.db"):
-    """检查视频是否已经下载"""
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute("SELECT 1 FROM videos WHERE bv = ?", (bv,))
-    result = cursor.fetchone()
-    conn.close()
-    return result is not None
 
 ####################################################
 
@@ -186,12 +94,13 @@ def get_latest_entry(directory):
 
 
 def main(strategy):
-    ## 1.Init
-    email_handler = EmailHandler(strategy.enable_email_notify, strategy.smtp_host, strategy.smtp_port, strategy.mail_license, strategy.receivers)
-    user_stars_rss = UserStarsHandler(strategy.rss_url, strategy.rss_url_key)
-    parser = user_stars_rss
-    handler = Bilix()
+    # init parser
+    parser = UserStarsHandler(strategy.rss_url, strategy.rss_url_key)
 
+    # init downloader
+    downloader = Bilix()
+
+    # init uploader
     assert not (strategy.enable_rclone_upload and strategy.enable_od_upload), "Cannot enable both rclone and onedrive upload at the same time."
     if strategy.enable_rclone_upload:
         uploader = RClone(strategy.savefolder_path, strategy.rclone_upload_dir, rclone_port=5572)
@@ -201,9 +110,13 @@ def main(strategy):
     else:
         uploader = None
 
-    init_db(DB_plaintext_path) # init database
+    # init database manager
+    db_manager = DBManager(db_path=DB_plaintext_path)
+    
+    # init email handler
+    email_handler = EmailHandler(strategy.enable_email_notify, strategy.smtp_host, strategy.smtp_port, strategy.mail_license, strategy.receivers)
 
-    ### messy params
+    # set global messy params
     all_tasks_success = True
     num_newly_backup_global = 0
     titles_newly_download_global = []
@@ -212,122 +125,116 @@ def main(strategy):
         all_tasks_success = False
         collect_errors(f"RSS source is not available.")
 
-    for user in strategy.users:
-        uid = user["uid"]
-        username = user["name"]
-        collections = user["collections"]
-        add_user(uid, username, DB_plaintext_path)
-        for collection in collections:
-            ## local position
-            fid = collection["fid"]
-            collection_name = collection["name"]
-            collection_max_ep = collection["max_ep"]
-            download_folder = os.path.join(strategy.savefolder_path, username, collection_name).replace('\\','/')
-            if not os.path.exists(download_folder):
-                os.makedirs(download_folder)
+    else:
+        # start to process
+        for user in strategy.users:
+            uid, username, collections = user["uid"], user["name"], user["collections"]
+            db_manager.add_user(uid, username)
 
+            for collection in collections:
+                fid, collection_name, collection_max_ep = collection["fid"], collection["name"], collection["max_ep"]
 
-            ## init table
-            add_collection(fid, uid, collection_name, DB_plaintext_path)
-            
-            ## get new videos data via RSS
-            video_meta_list = parser.get_new_videos(uid, fid)
-            if len(video_meta_list) > 0: 
-                # for limited space, download one by one
-                for video_meta in video_meta_list:
-                    all_eps_ok = True
-                    if is_video_downloaded(video_meta.bv, DB_plaintext_path):
-                        logger.info(f"Video [{video_meta.title}] has been downloaded, skip.")
-                        continue
+                download_folder = os.path.join(strategy.savefolder_path, username, collection_name).replace('\\','/')
+                if not os.path.exists(download_folder):
+                    os.makedirs(download_folder)
 
-                    # get info
-                    video_info_fetched = handler.get_video_metadata(video_meta.link)
-                    num_eps = len(video_info_fetched.pages)
-                    ## skip videos with many eps
-                    if num_eps > collection_max_ep: # check eps
-                        logger.warning(f"Too many eps in video [{video_meta.title}], skip")
-                    else:  ## try to download             
-                        ## download videos
-                        logger.info(f"Downloading {video_meta.title}...")
-                        if handler.download_video(video_link=video_meta.link, path=download_folder):
-                            logger.info(f"Successfully backup {video_meta.title} into {download_folder}.")
+                ## init fid--uid table if necessary
+                db_manager.add_collection(fid, uid, collection_name)
+                
+                ## get new videos data via RSS
+                video_meta_list = parser.get_new_videos(uid, fid)
+                if len(video_meta_list) > 0: 
+                    ### for limited space, download and upload one by one(, remove one by one)
+                    for video_meta in video_meta_list:
+                        all_eps_ok = True
+                        if db_manager.is_video_downloaded(video_meta.bv):
+                            logger.info(f"Video [{video_meta.title}] has been downloaded, skip.")
+                            continue
 
-                            ## get all videos to upload
-                            entry, is_folder, create_time1 = get_latest_entry(download_folder)
-                            if is_folder:
-                                videos_to_upload = []
-                                for filename in os.listdir(entry):
-                                    relative_filename = os.path.join(entry, filename).replace('\\','/')
-                                    if os.path.isfile(relative_filename):
-                                        videos_to_upload.append(relative_filename)
-                                if len(videos_to_upload) > collection_max_ep:
-                                    logger.warning(f"Too many eps in video [{entry}], ignore")
-                                    continue
-                                extra_folder = os.path.join(entry, "extra").replace('\\','/')
+                        #### get info first (currently use bilix api)
+                        video_info_fetched = downloader.get_video_metadata(video_meta.link)
+
+                        #### skip videos with many eps
+                        num_eps = len(video_info_fetched.pages)
+                        if num_eps > collection_max_ep: # check eps
+                            logger.warning(f"Too many eps in video [{video_meta.title}], skip")
+                        else:  ##### try to download this bv to local
+                            logger.info(f"Downloading {video_meta.title}...")
+                            if downloader.download_video(video_link=video_meta.link, path=download_folder):
+                                logger.info(f"Successfully backup {video_meta.title} into {download_folder}.")
+
+                                ###### get all videos to upload (for onedrive API only)
+                                entry, is_folder, _ = get_latest_entry(download_folder)
+                                if is_folder:
+                                    videos_to_upload = []
+                                    for filename in os.listdir(entry):
+                                        relative_filename = os.path.join(entry, filename).replace('\\','/')
+                                        if os.path.isfile(relative_filename):
+                                            videos_to_upload.append(relative_filename)
+                                    extra_folder = os.path.join(entry, "extra").replace('\\','/')
+                                else:
+                                    videos_to_upload = [entry]
+                                    extra_folder = os.path.join(download_folder, "extra").replace('\\','/')
+
+                                ###### download cover jpg:
+                                local_relative_thumb_url = os.path.join("extra", f"{video_meta.title}.jpg").replace('\\','/')
+                                if not downloader.download(video_meta.thumb_url, os.path.join(extra_folder, f"{video_meta.title}.jpg")):
+                                    all_eps_ok = False
+                                    all_tasks_success = False
+                                    logger.error("Failed to download cover jpg.")
+
+                                ###### add other metadata
+                                video_meta.thumb_url = local_relative_thumb_url
+                                video_meta.episode = len(videos_to_upload)
+
+                                ###### gen nfo file
+                                video_meta.to_nfo(extra_folder)
+                                
+                                ###### get all extra files to upload (for onedrive API only)
+                                extra_to_upload = []
+                                for extra_file in os.listdir(extra_folder):
+                                    relative_extra_file = os.path.join(extra_folder, extra_file).replace('\\','/')
+                                    if os.path.isfile(relative_extra_file):
+                                        extra_to_upload.append(relative_extra_file)
+                                                            
+                                
+                                ###### upload to remote (optional)
+                                if strategy.enable_od_upload:
+                                    ### upload videos
+                                    is_full_videos_upload_success = uploader.upload(videos_to_upload, remove_local=True)
+                                    ### upload metadata and cover
+                                    is_full_extra_uoload_success = uploader.upload(extra_to_upload, remove_local=True)
+
+                                    if not (is_full_videos_upload_success and is_full_extra_uoload_success):
+                                        # failed_video_metadata_list.append(video_meta)
+                                        all_tasks_success = False
+                                        all_eps_ok = False
+
+                                elif strategy.enable_rclone_upload:
+                                    if not uploader.upload(videos_to_upload, remove_local=True):
+                                        all_tasks_success = False
+                                        all_eps_ok = False
                             else:
-                                # print("not folder")
-                                videos_to_upload = [entry]
-                                extra_folder = os.path.join(download_folder, "extra").replace('\\','/')
-
-                            ## download cover jpg:
-                            local_relative_thumb_url = os.path.join("extra", f"{video_meta.title}.jpg").replace('\\','/')
-                            if not handler.download(video_meta.thumb_url, os.path.join(extra_folder, f"{video_meta.title}.jpg")):
+                                ###### failed to download this bv  
                                 all_eps_ok = False
-                                all_tasks_success = False
-                                logger.error("Failed to download cover jpg.")
+                                all_tasks_success = False                            
+                                logger.error(f"fail to download {video_meta.title}")
 
-                            ## add other metadata
-                            video_meta.thumb_url = local_relative_thumb_url
-                            video_meta.episode = len(videos_to_upload)
-                            ## gen nfo file
-                            video_meta.to_nfo(extra_folder)
-                            
+                        #### save to database
+                        if all_eps_ok:
+                            db_manager.add_video(video_meta.bv, video_meta.title, video_meta.link)
+                            db_manager.add_video_to_collection(fid, video_meta.bv)
+                            num_newly_backup_global += 1
+                            titles_newly_download_global.append(video_meta.title)
+                        else:   # failed to fully successfully process this BV
+                            all_tasks_success = False
+                            pass #FIXME
 
-                            ## get all extra files to upload
-                            extra_to_upload = []
-                            for extra_file in os.listdir(extra_folder):
-                                relative_extra_file = os.path.join(extra_folder, extra_file).replace('\\','/')
-                                if os.path.isfile(relative_extra_file):
-                                    extra_to_upload.append(relative_extra_file)
-                                                        
-                            
-                            ## upload(optional)
-                            if strategy.enable_od_upload:
-                                ### upload videos
-                                is_full_videos_upload_success = uploader.upload(videos_to_upload, remove_local=True)
-                                ### upload metadata and cover
-                                is_full_extra_uoload_success = uploader.upload(extra_to_upload, remove_local=True)
-
-                                if not (is_full_videos_upload_success and is_full_extra_uoload_success):
-                                    # failed_video_metadata_list.append(video_meta)
-                                    all_tasks_success = False
-                                    all_eps_ok = False
-
-                            elif strategy.enable_rclone_upload:
-                                if not uploader.upload(videos_to_upload, remove_local=True):
-                                    all_tasks_success = False
-                                    all_eps_ok = False
-                        else:
-                            # this url download failed
-                            all_eps_ok = False
-                            all_tasks_success = False                            
-                            logger.error(f"fail to download {video_meta.title}")
-
-                    ## save to database
-                    if all_eps_ok:
-                        add_video(video_meta.bv, video_meta.title, video_meta.link, DB_plaintext_path)
-                        add_video_to_collection(fid, video_meta.bv, DB_plaintext_path)
-                        num_newly_backup_global += 1
-                        titles_newly_download_global.append(video_meta.title)
-                    else:   # upload videos failled
-                        all_tasks_success = False
-                        pass #FIXME
-
-            else:
-                logger.warning(f"No new video found in {collection_name}.")
+                else:
+                    logger.warning(f"No new video found in {collection_name}.")
 
 
-    ## send email
+    # send email (optional)
     if strategy.enable_email_notify:
         ### check result and prepare mail data
         logger.info("=" * 50)
