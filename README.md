@@ -11,7 +11,8 @@ Mainly designed for github action on public repos, the database file is simply e
 ## Usage
 
 ### Use Github Action
-0. You need [a onedrive with API](#About-Onedrive) to save your backup data(Otherwise why you choose this method??).
+> You need [a onedrive with API](#About-Onedrive) to save your backup data(Otherwise why you choose this method??).
+
 1. Fork the repo
 2. Use your own information to set the needed secrets in your repo(Repo Settings -- Secrets and variables -- Actions -- Secrets). You need an email with SMTP host, port, account and app password. Check out [User config](#User-config) for the full config we need.
 ![](docs/add_secrets.png)
@@ -26,6 +27,8 @@ Note that sometimes(or in most time, maybe related to VM's IP) when running via 
 If you feel it is unstable, the docker or local method is preferred for you, see the content below.
 
 ### Use Docker
+> rclone is not supported yet
+
 1. Download the config file:
 ```
 wget https://github.com/Freddd13/pybilibackup/blob/main/localconfig.yaml?raw=true -O .localconfig.yaml
@@ -48,7 +51,8 @@ fredyu13/pybilibackup:latest
 | Variable                  | Description                                         | Example Value          |
 |---------------------------|-----------------------------------------------------|------------------------|
 | `Backup_database_key`     | The key you generated                   | `114514iiyokoiyo`      |
-| `savefolder_path`     | backup root folder (relative to the repo)                   | `files` (recommended, if modified, remember to change the mounting accordingly when running docker)      |
+| `Backup_remove_local_files`     | whether to remove local files after uploading to remote                   | `1`      |
+| `Backup_savefolder_path`     | backup root folder (relative to the repo)                   | `files` (recommended, if modified, remember to change the mounting accordingly when running docker)      |
 | `RSS_url`                 | URL of the RSS feed.                               | `https://rsshub.app`|
 | `RSS_key`                 | key of your self-hosted rsshub. url->url/SOMEROUTE?key={key} If you don't know what is it, just leave it empty.                               | `123`|
 | `enable_email_notify`      | Whether to notify downloading result via email  (1 enable, 0 disable)  | `1` |
@@ -58,11 +62,13 @@ fredyu13/pybilibackup:latest
 | `Email_smtp_port`         | SMTP server port used to send emails.              | `11451`                  |
 | `Email_mail_license`      | SMTP password or authorization used for sending emails.  | `1145141919810`  |
 | `Email_send_logs`      | Whether to send email with logs (1 enable, 0 disable)  | `1`  |
-| `enable_od_upload`      | Whether to also upload sheets to onedrive (1 enable, 0 disable)  | `0`  |
+| `enable_od_upload`      | Whether to backup to onedrive (1 enable, 0 disable)  | `0`  |
 | `od_client_id`      | onedrive app client id  | `114514`  |
 | `od_client_secret`      | onedrive app client secret value | `114514`  |
 | `od_redirect_uri`      | onedrive app redirect_ur  | `http://localhost:9001`  |
-| `od_upload_dir`      | which onedrive dir to upload sheets to relative to the root, do NOT start with '/'  | `bili_backup`  |
+| `od_upload_dir`      | which onedrive dir to save backup files(relative to the root, do NOT start with '/')  | `bili_backup`  |
+| `enable_rclone_upload`      | whether to use rclone to backup to  remote (1 enable, 0 disable)  | `1`  |
+| `od_upload_dir`      |  rclone drive path  | `onedrive-remote:/test_rclone`  |
 | `BiliBili_users`      |  first fill in the given example yaml locally, then run the dump_yaml_to_json.py locally, finally paste the json in str format into the screct value                                                                         | json-like| |
 
 
@@ -87,6 +93,14 @@ The schedule task can be adjusted by modifing the ./docker/crontab.
 Currently the repo depends on [MMS user route rss from RSSHub](https://docs.rsshub.app/routes/social-media#youtube-user). It's recommended to replace the domain with your self-hosted rsshub url, because the public hub can sometimes be banned by source sites. Besides, self-hosting one is quite benefit for your other future usage. If you don't have one, you can use the default url `https://rsshub.app/`.
 For more info, please check [RSSHub doc](https://docs.rsshub.app/).
 
+### About Rclone
+First you need to config your remote drive.
+The code in this repo can automatically start rclone rcd. But it's still recommended to manually start before running the backup:
+```bash
+nohup rclone rcd --rc-no-auth >/dev/null 2>&1 &
+```
+
+
 
 ### About Onedrive
 Currently the repo only supports uploading via onedrive API, though rclone maybe supported in the future.
@@ -108,15 +122,17 @@ git add _refresh_token && git commit -m "add token" && git push -f
 - [x] docker
 - [x] fix local storage check
 - [x] fix bug when remaining history files
+- [x] rclone for local
+- [ ] rclone for docker
 - [ ] add retry history failed videos
 - [ ] config from gist
 - [ ] backup summary
-- [ ] rclone upload support
 - [ ] bot
 
 # Acknowledgement
 - [bilix](https://github.com/HFrost0/bilix)
 - [bili-fav-sniffer](https://github.com/SummerLiu95/bili-fav-sniffer)
+- [BiliBackup](https://github.com/Privilege-privacy/BiliBackup)
 - [rsshub](https://github.com/DIYgod/RSSHub)
 
 # Disclaimer:
