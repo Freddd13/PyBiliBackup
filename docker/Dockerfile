@@ -17,6 +17,8 @@ ENV BILIBILI_BACKUP_ENV=DOCKER
 # 安装cron并设置定时任务
 RUN apt-get update && apt-get -y install cron ffmpeg
 RUN chmod 777 /var/run
+RUN printenv > /etc/environment
+
 COPY ./docker/crontab /etc/cron.d/my-cron-job
 RUN chmod 0644 /etc/cron.d/my-cron-job
 RUN touch /var/log/cron.log
