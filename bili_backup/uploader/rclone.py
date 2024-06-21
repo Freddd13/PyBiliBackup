@@ -64,7 +64,7 @@ class RClone(BaseRequest):
             return False
         
         try:
-            logger.info(f"Uploading the following files...\n{'\n'.join(files_to_upload)}")
+            logger.info(f"Uploading the following files...\n- {'\n- '.join(files_to_upload)}")
 
             abs_path = os.path.join(os.getcwd(), self.local_base_path_relative_to_repo)
             url = f"http://127.0.0.1:5572/sync/copy?srcFs={abs_path}&dstFs={self.remote_base_path_relative_to_repo}&createEmptySrcDirs=true"
