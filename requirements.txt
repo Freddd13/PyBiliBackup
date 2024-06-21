@@ -8,3 +8,4 @@ microsoftgraph-python
 bilix
 bs4
 colorlog
+cryptography

@@ -23,6 +23,10 @@ onedrive:
   od_redirect_uri: 114514
   od_upload_dir: abcd # relative to root， do not use '/' at the beginning
 
+rclone:
+  enable_rclone_upload: 0
+  rclone_upload_dir: abcd # relative to root， do not use '/' at the beginning
+
 
 BiliBili:
   users:

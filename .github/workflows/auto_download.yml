@@ -35,6 +35,9 @@ jobs:
       od_redirect_uri:  ${{ secrets.od_redirect_uri }}
       od_upload_dir:  ${{ secrets.od_upload_dir }}
 
+      enable_rclone_upload:  ${{ secrets.enable_rclone_upload }}
+      rclone_upload_dir:  ${{ secrets.rclone_upload_dir }}
+
       BiliBili_users: ${{ secrets.BiliBili_users }}
       Backup_database_key: ${{ secrets.Backup_database_key }}
 

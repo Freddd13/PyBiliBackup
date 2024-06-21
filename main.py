@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:31
 LastEditors: Kumo
-LastEditTime: 2024-06-20 22:46:35
+LastEditTime: 2024-06-21 14:52:54
 Description: 
 '''
 from bili_backup.cloudreve import Cloudreve
@@ -16,6 +16,8 @@ from bili_backup.rss_sources.user_stars import UserStarsHandler
 from bili_backup.downloader.bilix import Bilix
 
 from bili_backup.onedrive.onedrive import OnedriveManager
+from bili_backup.uploader.onedrive import Onedrive
+from bili_backup.uploader.rclone import RClone
 
 from bili_backup.safety.crypt import *
 
@@ -182,51 +184,6 @@ def get_latest_entry(directory):
         return latest_entry, False, latest_entry_time
 
 
-def upload_to_onedrive(om, strategy, files_to_upload):
-    global last_token_refresh_timestamp
-    all_od_upload_success = True
-    failed_files = []
-    ### upload video
-    num_subvideo_download=0
-    for file in files_to_upload:
-        num_subvideo_download += 1
-        if time.time() - last_token_refresh_timestamp > max_token_valid_time:
-            last_token_refresh_timestamp = time.time()
-            if not om.try_refresh_token():
-                collect_errors('cannot refresh onedrive token')
-                return False
-
-        # get filename from path with extension
-        relative_path = file.replace(f"{strategy.savefolder_path}", "", 1)
-        if relative_path.startswith('/'):
-            relative_path = relative_path[1:]
-        # upload_target = os.path.join(strategy.od_upload_dir, os.path.basename(relative_path)).replace('\\','/')
-        upload_target = os.path.join(strategy.od_upload_dir, relative_path).replace('\\','/')
-        # logger.debug(upload_target)
-
-        # retry for max 5 times
-        upload_success = False
-        for i in range(5):
-            if om.upload_large_file(file, upload_target, verbose_prefix=f"({num_subvideo_download}/{len(files_to_upload)}) "):
-                # delete file
-                if REMOVE_LOCAL_FILES:
-                    logger.debug(f"remove {file}")
-                    os.remove(file)
-                logger.info(f'Upload {os.path.basename(relative_path)} to onedrive successfully')           
-                upload_success = True     
-                break
-            else:
-                logger.warning(f"Retry {i+1} times for {file}, sleep for 3s...")
-                time.sleep(3)
-
-        if not upload_success:
-            all_od_upload_success = False
-            failed_files.append(file)
-            collect_errors('Failed to upload to onedrive')
-
-    return all_od_upload_success
-
-
 
 def main(strategy):
     ## 1.Init
@@ -234,8 +191,15 @@ def main(strategy):
     user_stars_rss = UserStarsHandler(strategy.rss_url, strategy.rss_url_key)
     parser = user_stars_rss
     handler = Bilix()
-    if strategy.enable_od_upload:
-        om = OnedriveManager(strategy.od_client_id, strategy.od_client_secret, strategy.od_redirect_uri)   
+
+    assert not (strategy.enable_rclone_upload and strategy.enable_od_upload), "Cannot enable both rclone and onedrive upload at the same time."
+    if strategy.enable_rclone_upload:
+        uploader = RClone(strategy.savefolder_path, strategy.rclone_upload_dir, rclone_port=5572)
+    elif strategy.enable_od_upload:
+        om = OnedriveManager(strategy.od_client_id, strategy.od_client_secret, strategy.od_redirect_uri)
+        uploader = Onedrive(strategy.savefolder_path, strategy.od_upload_dir, om)
+    else:
+        uploader = None
 
     init_db(DB_plaintext_path) # init database
 
@@ -318,20 +282,26 @@ def main(strategy):
                             if os.path.isfile(relative_extra_file):
                                 extra_to_upload.append(relative_extra_file)
                                                     
-                        ## upload to onedrive
+                        
+                        ## upload(optional)
                         if strategy.enable_od_upload:
                             ### upload videos
-                            is_full_videos_upload_success = upload_to_onedrive(om, strategy, videos_to_upload)
-
+                            is_full_videos_upload_success = uploader.upload(videos_to_upload, remove_local=True)
                             ### upload metadata and cover
-                            is_full_extra_uoload_success = upload_to_onedrive(om, strategy, extra_to_upload)
+                            is_full_extra_uoload_success = uploader.upload(extra_to_upload, remove_local=True)
 
                             if not (is_full_videos_upload_success and is_full_extra_uoload_success):
                                 # failed_video_metadata_list.append(video_meta)
                                 all_tasks_success = False
                                 all_eps_ok = False
+
+                        elif strategy.enable_rclone_upload:
+                            if not uploader.upload(videos_to_upload, remove_local=True):
+                                all_tasks_success = False
+                                all_eps_ok = False
                         
-                        # save to database
+
+                        ## save to database
                         if all_eps_ok:
                             add_video(video_meta.bv, video_meta.title, video_meta.link, DB_plaintext_path)
                             add_video_to_collection(fid, video_meta.bv, DB_plaintext_path)
@@ -346,8 +316,6 @@ def main(strategy):
                     
             else:
                 logger.warning(f"No new video found in {collection_name}.")
-
-
 
 
     ## send email

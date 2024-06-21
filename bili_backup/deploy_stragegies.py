@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:44
 LastEditors: Kumo
-LastEditTime: 2024-06-20 23:36:24
+LastEditTime: 2024-06-21 14:46:39
 Description: 
 '''
 from .utils.logger import LoggerManager
@@ -62,6 +62,10 @@ class GithubActionStrategy(BaseStrategy):
         self.od_redirect_uri = os.environ.get('od_redirect_uri')
         self.od_upload_dir =  os.environ.get('od_upload_dir')
 
+        # rclone
+        self.enable_rclone_upload = bool(os.environ.get('enable_rclone_upload'))
+        self.rclone_upload_dir = os.environ.get('rclone_upload_dir')
+
         # bilibili
         bilibili_users_str = os.environ.get('BiliBili_users')
         assert bilibili_users_str
@@ -104,6 +108,10 @@ class DockerStrategy(BaseStrategy):
         self.od_redirect_uri =  yaml_data['onedrive']['od_redirect_uri']
         self.od_upload_dir =  yaml_data['onedrive']['od_upload_dir']        
 
+        # rclone
+        self.enable_rclone_upload = yaml_data['rclone']['enable_rclone_upload']    
+        self.rclone_upload_dir = yaml_data['rclone']['rclone_upload_dir']    
+
         self.users = yaml_data['BiliBili']['users']  
 
 # @log_manager.apply_log_method_to_all_methods
@@ -138,6 +146,10 @@ class LocalStrategy(BaseStrategy):
         self.od_redirect_uri =  yaml_data['onedrive']['od_redirect_uri']        
         self.od_upload_dir =  yaml_data['onedrive']['od_upload_dir']        
        
+        # rclone
+        self.enable_rclone_upload = yaml_data['rclone']['enable_rclone_upload']    
+        self.rclone_upload_dir = yaml_data['rclone']['rclone_upload_dir']    
+               
         self.users = yaml_data['BiliBili']['users']  
 
 
