@@ -1,5 +1,5 @@
 # PyBiliBackup
-Automatically backup bilibili videos in your favorites.
+Automatically backup bilibili videos in your collections.
 
 
 ## Method
@@ -11,6 +11,7 @@ Mainly designed for github action on public repos, the database file is simply e
 ## Usage
 
 ### Use Github Action
+0. You need [nonpersonal onedrive](#About-Onedrive) to save your backup data(Otherwise why you choose this method??).
 1. Fork the repo
 2. Use your own information to set the needed secrets in your repo(Repo Settings -- Secrets and variables -- Actions -- Secrets). You need an email with SMTP host, port, account and app password. Check out [User config](#User-config) for the full config we need.
 ![](docs/add_secrets.png)
@@ -88,6 +89,7 @@ For more info, please check [RSSHub doc](https://docs.rsshub.app/).
 
 
 ### About Onedrive
+Currently the repo only supports uploading via onedrive API, though rclone maybe supported in the future.
 To save to onedrive, you need to create an app in [Azure](https://portal.azure.com/#home). Note that currently only onedrive business international is tested.
 Check out [here](bili_backup/onedrive/README.md) for detailed instructions of getting required data.
 The onedrive needs a login for the first time, after that the token will be saved to `_refresh_token`. As I have no idea how to receive auth callback in github action, the code assumes there's already a token file with token. Thus you need to run on local first to generate the token file. 
@@ -101,23 +103,21 @@ git add _refresh_token && git commit -m "add token" && git push -f
 4. Follow [Use Github Action](#Use-Github-Action)
 
 
-### About Email
-The `enable_email_notify` is used to send you downloading result including sheets and app log. If you disable the email, there's still another way to save your sheets: remove the `MMS_savefolder_path` directory if it exists in the `.gitignore`. The action will update the downloaded sheets to your repo. But it's not a good behavior to share others' sheets without permission, thus it's not recommended to disable email before other uploading method is supported.
-
 
 ## TODO
 - [x] docker
 - [x] fix local storage check
 - [x] fix bug when remaining history files
 - [ ] add retry history failed videos
-- [ ] backup summary
 - [ ] config from gist
+- [ ] backup summary
+- [ ] rclone upload support
 - [ ] bot
 
 # Acknowledgement
-- [Bilix](https://github.com/HFrost0/bilix)
+- [bilix](https://github.com/HFrost0/bilix)
 - [bili-fav-sniffer](https://github.com/SummerLiu95/bili-fav-sniffer)
-- [RSSHub](https://github.com/DIYgod/RSSHub)
+- [rsshub](https://github.com/DIYgod/RSSHub)
 
 # Disclaimer:
 ```
