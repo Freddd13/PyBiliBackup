@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:31
 LastEditors: Kumo
-LastEditTime: 2024-06-21 22:02:08
+LastEditTime: 2024-06-21 23:23:30
 Description: 
 '''
 from bili_backup.cloudreve import Cloudreve
@@ -201,9 +201,9 @@ def main(strategy):
                                 ###### upload to remote (optional)
                                 if strategy.enable_od_upload:
                                     ### upload videos
-                                    is_full_videos_upload_success = uploader.upload(videos_to_upload, remove_local=True)
+                                    is_full_videos_upload_success = uploader.upload(videos_to_upload, remove_local=strategy.remove_local_files)
                                     ### upload metadata and cover
-                                    is_full_extra_uoload_success = uploader.upload(extra_to_upload, remove_local=True)
+                                    is_full_extra_uoload_success = uploader.upload(extra_to_upload, remove_local=strategy.remove_local_files)
 
                                     if not (is_full_videos_upload_success and is_full_extra_uoload_success):
                                         # failed_video_metadata_list.append(video_meta)
@@ -211,7 +211,7 @@ def main(strategy):
                                         all_eps_ok = False
 
                                 elif strategy.enable_rclone_upload:
-                                    if not uploader.upload(videos_to_upload, remove_local=True):
+                                    if not uploader.upload(videos_to_upload, remove_local=strategy.remove_local_files):
                                         all_tasks_success = False
                                         all_eps_ok = False
                             else:

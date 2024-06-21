@@ -15,6 +15,7 @@ jobs:
       BILIBILI_BACKUP_ENV: GITHUB_ACTION
 
       Backup_savefolder_path: ${{ secrets.Backup_savefolder_path }}
+      Backup_remove_local_files: ${{ secrets.Backup_remove_local_files }}
 
       RSS_url: ${{ secrets.RSS_url }}
       RSS_url_key: ${{ secrets.RSS_url_key }}

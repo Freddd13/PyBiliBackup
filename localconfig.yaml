@@ -1,6 +1,7 @@
 Backup:
   savefolder_path: files
   database_key: 
+  remove_local_files: 0 # warning
 
 RSS:
   url: 233
@@ -21,11 +22,11 @@ onedrive:
   od_client_id: 114514
   od_client_secret: 114514
   od_redirect_uri: 114514
-  od_upload_dir: abcd # relative to root， do not use '/' at the beginning
+  od_upload_dir: abcd # relative to onedrive root， do not use '/' at the beginning
 
 rclone:
   enable_rclone_upload: 0
-  rclone_upload_dir: abcd # relative to root， do not use '/' at the beginning
+  rclone_upload_dir: onedrive-remote:/test_rclone # rclone drive path
 
 
 BiliBili:

@@ -43,6 +43,7 @@ class GithubActionStrategy(BaseStrategy):
         self.password = os.environ.get('MMS_password')
         self.savefolder_path = os.environ.get('Backup_savefolder_path')
         self.database_key = os.environ.get('Backup_database_key')
+        self.remove_local_files = os.environ.get('Backup_remove_local_files')
 
         self.rss_url = os.environ.get('RSS_url')
         self.rss_url_key = os.environ.get('RSS_url_key')
@@ -90,6 +91,7 @@ class DockerStrategy(BaseStrategy):
         self.savefolder_path = yaml_data['Backup']['savefolder_path']
         self.database_key = yaml_data['Backup']['database_key']
         os.environ['Backup_database_key'] = self.database_key
+        self.remove_local_files = yaml_data['Backup']['remove_local_files']
 
         self.rss_url = yaml_data['RSS']['url']
         self.rss_url_key = yaml_data['RSS']['key']
@@ -128,6 +130,7 @@ class LocalStrategy(BaseStrategy):
         self.savefolder_path = yaml_data['Backup']['savefolder_path']
         self.database_key = yaml_data['Backup']['database_key']
         os.environ['Backup_database_key'] = self.database_key
+        self.remove_local_files = yaml_data['Backup']['remove_local_files']
 
         self.rss_url = yaml_data['RSS']['url']
         self.rss_url_key = yaml_data['RSS']['key']
