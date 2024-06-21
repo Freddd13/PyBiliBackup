@@ -20,6 +20,7 @@ class RClone(BaseRequest):
 
         self._rclone_start_timeout = 10
 
+
     def check_rclone_port(self, port):
         try:
             response = subprocess.run("ps -A | grep rclone", shell=True, capture_output=True, text=True)
@@ -33,15 +34,15 @@ class RClone(BaseRequest):
             logger.error(f"Failed to check rclone port: {str(e)}")
             return False
 
+
     def start_rclone(self):
         if not self.check_rclone_port(self.rclone_port):
             logger.info("RClone is not running, starting rclone...")
 
             try:
                 subprocess.Popen(
-                    ["nohup", "rclone", "rcd", "--rc-no-auth"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
+                    "nohup rclone rcd --rc-no-auth >/dev/null 2>&1 &",
+                    shell=True,
                     preexec_fn=os.setpgrp  # 防止子进程接受到父进程的信号
                 )
             except Exception as e:
