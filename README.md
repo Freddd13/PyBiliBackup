@@ -114,6 +114,10 @@ The `enable_email_notify` is used to send you downloading result including sheet
 - [ ] config from gist
 - [ ] bot
 
+# Acknowledgement
+- [Bilix](https://github.com/HFrost0/bilix)
+- [bili-fav-sniffer](https://github.com/SummerLiu95/bili-fav-sniffer)
+- [RSSHub](https://github.com/DIYgod/RSSHub)
 
 # Disclaimer:
 ```
