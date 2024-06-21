@@ -74,5 +74,5 @@ jobs:
           echo "No changes to commit"
         else
           git commit -m "Update last success time"
-          git push -f
+          git push
         fi
