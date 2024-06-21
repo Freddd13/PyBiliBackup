@@ -33,8 +33,8 @@ wget https://github.com/Freddd13/pybilibackup/blob/main/localconfig.yaml?raw=tru
 2. Replace your own data in the yaml above. Check out [User config](#User-config) for the full config we need.
 3. Download image and run:
 ```
-mkdir pybilibackup
-touch pybilibackup/_last_download_signal
+mkdir -p pybilibackup/files pybilibackup/database
+
 docker run -d --name pybilibackup \
 -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
 -v $(pwd)/pybilibackup/files:/app/files \
