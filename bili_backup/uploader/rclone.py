@@ -53,7 +53,7 @@ class RClone(BaseRequest):
             if "{}" in response.text:
                 logger.info(f"Rclone upload success")
                 if remove_local:
-                    delete_contents_keep_structure(abs_path)
+                    delete_contents(abs_path)
                 return True
             else:
                 logger.error(f"Rclone upload failed")
