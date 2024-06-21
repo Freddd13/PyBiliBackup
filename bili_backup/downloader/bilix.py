@@ -1,12 +1,14 @@
 '''
 Date: 2023-10-23 18:04:14
 LastEditors: Kumo
-LastEditTime: 2024-06-20 21:25:51
+LastEditTime: 2024-06-21 18:57:31
 Description: 
 '''
 
+import httpx
 import asyncio
 from bilix.sites.bilibili import DownloaderBilibili
+from bilix.sites.bilibili.api import get_video_info
 
 from .base_downloader import BaseDownloader
 from ..utils.proxy_decorator import MY_PROXY
@@ -56,8 +58,27 @@ class Bilix(BaseDownloader, metaclass=SingletonMeta):
                 logger.error(f"Fail to download {link}")
                 self._success = False
         return self._success
-           
+    
 
+    async def _get_video_metadata_action(self, url):
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Referer': 'https://www.bilibili.com'
+        }
+        cookies = {
+            'CURRENT_FNVAL': '4048'
+        }
+        async with httpx.AsyncClient(headers=headers, cookies=cookies, http2=True) as client:
+            info = await get_video_info(client, url)
+
+            return info
+
+
+    def get_video_metadata(self, url):
+        return asyncio.run(self._get_video_metadata_action(url))
+
+
+        
     @property
     def file_paths(self):
         return self._files

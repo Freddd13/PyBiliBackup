@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:31
 LastEditors: Kumo
-LastEditTime: 2024-06-21 14:52:54
+LastEditTime: 2024-06-21 19:15:12
 Description: 
 '''
 from bili_backup.cloudreve import Cloudreve
@@ -237,83 +237,92 @@ def main(strategy):
                 for video_meta in video_meta_list:
                     all_eps_ok = True
                     if is_video_downloaded(video_meta.bv, DB_plaintext_path):
+                        logger.info(f"Video [{video_meta.title}] has been downloaded, skip.")
                         continue
 
-                    # download videos
-                    logger.info(f"Downloading {video_meta.title}...")
-                    if handler.download_video(video_link=video_meta.link, path=download_folder):
-                        logger.info(f"Successfully backup {video_meta.title} into {download_folder}.")
+                    # get info
+                    video_info_fetched = handler.get_video_metadata(video_meta.link)
+                    num_eps = len(video_info_fetched.pages)
+                    ## skip videos with many eps
+                    if num_eps > collection_max_ep: # check eps
+                        logger.warning(f"Too many eps in video [{video_meta.title}], skip")
+                    else:  ## try to download             
+                        ## download videos
+                        logger.info(f"Downloading {video_meta.title}...")
+                        if handler.download_video(video_link=video_meta.link, path=download_folder):
+                            logger.info(f"Successfully backup {video_meta.title} into {download_folder}.")
 
-                        ## get all videos to upload
-                        entry, is_folder, create_time1 = get_latest_entry(download_folder)
-                        if is_folder:
-                            videos_to_upload = []
-                            for filename in os.listdir(entry):
-                                relative_filename = os.path.join(entry, filename).replace('\\','/')
-                                if os.path.isfile(relative_filename):
-                                    videos_to_upload.append(relative_filename)
-                            if len(videos_to_upload) > collection_max_ep:
-                                logger.warning(f"Too many eps in video [{entry}], ignore")
-                                continue
-                            extra_folder = os.path.join(entry, "extra").replace('\\','/')
+                            ## get all videos to upload
+                            entry, is_folder, create_time1 = get_latest_entry(download_folder)
+                            if is_folder:
+                                videos_to_upload = []
+                                for filename in os.listdir(entry):
+                                    relative_filename = os.path.join(entry, filename).replace('\\','/')
+                                    if os.path.isfile(relative_filename):
+                                        videos_to_upload.append(relative_filename)
+                                if len(videos_to_upload) > collection_max_ep:
+                                    logger.warning(f"Too many eps in video [{entry}], ignore")
+                                    continue
+                                extra_folder = os.path.join(entry, "extra").replace('\\','/')
+                            else:
+                                # print("not folder")
+                                videos_to_upload = [entry]
+                                extra_folder = os.path.join(download_folder, "extra").replace('\\','/')
+
+                            ## download cover jpg:
+                            local_relative_thumb_url = os.path.join("extra", f"{video_meta.title}.jpg").replace('\\','/')
+                            if not handler.download(video_meta.thumb_url, os.path.join(extra_folder, f"{video_meta.title}.jpg")):
+                                all_eps_ok = False
+                                all_tasks_success = False
+                                logger.error("Failed to download cover jpg.")
+
+                            ## add other metadata
+                            video_meta.thumb_url = local_relative_thumb_url
+                            video_meta.episode = len(videos_to_upload)
+                            ## gen nfo file
+                            video_meta.to_nfo(extra_folder)
+                            
+
+                            ## get all extra files to upload
+                            extra_to_upload = []
+                            for extra_file in os.listdir(extra_folder):
+                                relative_extra_file = os.path.join(extra_folder, extra_file).replace('\\','/')
+                                if os.path.isfile(relative_extra_file):
+                                    extra_to_upload.append(relative_extra_file)
+                                                        
+                            
+                            ## upload(optional)
+                            if strategy.enable_od_upload:
+                                ### upload videos
+                                is_full_videos_upload_success = uploader.upload(videos_to_upload, remove_local=True)
+                                ### upload metadata and cover
+                                is_full_extra_uoload_success = uploader.upload(extra_to_upload, remove_local=True)
+
+                                if not (is_full_videos_upload_success and is_full_extra_uoload_success):
+                                    # failed_video_metadata_list.append(video_meta)
+                                    all_tasks_success = False
+                                    all_eps_ok = False
+
+                            elif strategy.enable_rclone_upload:
+                                if not uploader.upload(videos_to_upload, remove_local=True):
+                                    all_tasks_success = False
+                                    all_eps_ok = False
                         else:
-                            # print("not folder")
-                            videos_to_upload = [entry]
-                            extra_folder = os.path.join(download_folder, "extra").replace('\\','/')
-
-                        ## download cover jpg:
-                        local_relative_thumb_url = os.path.join("extra", f"{video_meta.title}.jpg").replace('\\','/')
-                        if not handler.download(video_meta.thumb_url, os.path.join(extra_folder, f"{video_meta.title}.jpg")):
+                            # this url download failed
                             all_eps_ok = False
-                            all_tasks_success = False
-                            logger.error("Failed to download cover jpg.")
+                            all_tasks_success = False                            
+                            logger.error(f"fail to download {video_meta.title}")
 
-                        ## add other metadata
-                        video_meta.thumb_url = local_relative_thumb_url
-                        video_meta.episode = len(videos_to_upload)
-                        ## gen nfo file
-                        video_meta.to_nfo(extra_folder)
-                        
+                    ## save to database
+                    if all_eps_ok:
+                        add_video(video_meta.bv, video_meta.title, video_meta.link, DB_plaintext_path)
+                        add_video_to_collection(fid, video_meta.bv, DB_plaintext_path)
+                        num_newly_backup_global += 1
+                        titles_newly_download_global.append(video_meta.title)
+                    else:   # upload videos failled
+                        all_tasks_success = False
+                        pass #FIXME
 
-                        ## get all extra files to upload
-                        extra_to_upload = []
-                        for extra_file in os.listdir(extra_folder):
-                            relative_extra_file = os.path.join(extra_folder, extra_file).replace('\\','/')
-                            if os.path.isfile(relative_extra_file):
-                                extra_to_upload.append(relative_extra_file)
-                                                    
-                        
-                        ## upload(optional)
-                        if strategy.enable_od_upload:
-                            ### upload videos
-                            is_full_videos_upload_success = uploader.upload(videos_to_upload, remove_local=True)
-                            ### upload metadata and cover
-                            is_full_extra_uoload_success = uploader.upload(extra_to_upload, remove_local=True)
-
-                            if not (is_full_videos_upload_success and is_full_extra_uoload_success):
-                                # failed_video_metadata_list.append(video_meta)
-                                all_tasks_success = False
-                                all_eps_ok = False
-
-                        elif strategy.enable_rclone_upload:
-                            if not uploader.upload(videos_to_upload, remove_local=True):
-                                all_tasks_success = False
-                                all_eps_ok = False
-                        
-
-                        ## save to database
-                        if all_eps_ok:
-                            add_video(video_meta.bv, video_meta.title, video_meta.link, DB_plaintext_path)
-                            add_video_to_collection(fid, video_meta.bv, DB_plaintext_path)
-                            num_newly_backup_global += 1
-                            titles_newly_download_global.append(video_meta.title)
-                        else:   # upload videos failled
-                            all_tasks_success = False
-                            pass #FIXME
-
-                    else:   # download videos failed
-                        pass #TODO
-                    
             else:
                 logger.warning(f"No new video found in {collection_name}.")
 
