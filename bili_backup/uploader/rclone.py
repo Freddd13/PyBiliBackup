@@ -22,7 +22,9 @@ class RClone(BaseRequest):
 
     def check_rclone_port(self, port):
         try:
-            response = subprocess.run(["ps", "-A", "|grep", "rclone"], capture_output=True, text=True)
+            response = subprocess.run("ps -A | grep rclone", shell=True, capture_output=True, text=True)
+
+            print(response.stdout)
             if f"rclone" in response.stdout:
                 return True
             else:
@@ -34,21 +36,27 @@ class RClone(BaseRequest):
     def start_rclone(self):
         if not self.check_rclone_port(self.rclone_port):
             logger.info("RClone is not running, starting rclone...")
-            os.system("nohup rclone rcd --rc-no-auth >/dev/null 2>&1 &")
 
-            # wait rclone to start
+            try:
+                subprocess.Popen(
+                    ["nohup", "rclone", "rcd", "--rc-no-auth"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    preexec_fn=os.setpgrp  # 防止子进程接受到父进程的信号
+                )
+            except Exception as e:
+                logger.error(f"Failed to start rclone: {e}")
+                return False
+
+            # wait for rclone to start
             start_time = time.time()
             while not self.check_rclone_port(self.rclone_port):
                 if time.time() - start_time > self._rclone_start_timeout:
-                    logger.error("Failed to start rclone")
+                    logger.error("Failed to start rclone within timeout")
                     return False
                 time.sleep(1)
-                
-            if not self.check_rclone_port(self.rclone_port):
-                logger.error("Failed to start rclone")
-                return False
-            else:
-                logger.info("Start Rclone rcd success!")
+
+            logger.info("Start Rclone rcd success!")
         return True
 
 
