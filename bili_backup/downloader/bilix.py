@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:04:14
 LastEditors: Kumo
-LastEditTime: 2024-06-21 18:57:31
+LastEditTime: 2024-06-21 22:06:26
 Description: 
 '''
 
@@ -90,3 +90,10 @@ class Bilix(BaseDownloader, metaclass=SingletonMeta):
     @property
     def sheet_links(self):
         return self._video_links
+
+
+# # dft_client_settings = {
+# #     'headers': {'user-agent': 'PostmanRuntime/7.29.0', 'referer': 'https://www.bilibili.com'},
+# #     'cookies': {'CURRENT_FNVAL': '4048'},
+# #     'http2': True
+# # }
