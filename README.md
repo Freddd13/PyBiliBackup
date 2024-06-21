@@ -6,6 +6,8 @@ Automatically backup bilibili videos in your favorites.
 Use RSS to get new videos and bilix to download videos, finally we can upload them to onedrive.
 Note: If you want to enable uploading to onedrive: see [About Onedrive](#About-Onedrive).
 
+## Before start
+Mainly designed for github action on public repos, the database file is simply encrypted to protect private data. The db in the repo is always encrypted with .encdb. So you need to generate your own key. To start, firstly delete the original database/database.encdb. Then run bili_backup/gen_key.py locally to get a key. This is the key to encrypte your database. You should fill this value into database_key(or identical env variable) in your private yaml or github repo secret first.
 ## Usage
 
 ### Use Github Action
@@ -17,6 +19,10 @@ Settings -- Actions -- General
 ![](docs/enable_rw.png)
 
 Then the action will be triggered when pushing to repo or reaching a certain time everyday. The latter can be set in the auto_download.yml. 
+In the github action, the colorlog seems to bring some display errors, but it should not have effect on the code running.
+
+Note that sometimes(or in most time, maybe related to VM's IP) when running via github action, the api bilix using sometimes seems unaccessible, causing backup failure.
+If you feel it is unstable, the docker or local method is preferred for you, see the content below.
 
 ### Use Docker
 1. Download the config file:
@@ -40,7 +46,8 @@ fredyu13/pybilibackup:latest
 ### User config(For Github Action Secrets, but it's similar for yaml)
 | Variable                  | Description                                         | Example Value          |
 |---------------------------|-----------------------------------------------------|------------------------|
-| `savefolder_path`     | backup root folder (relative to the repo)                   | `files` (recommended)      |
+| `Backup_database_key`     | The key you generated                   | `114514iiyokoiyo`      |
+| `savefolder_path`     | backup root folder (relative to the repo)                   | `files` (recommended, if modified, remember to change the mounting accordingly when running docker)      |
 | `RSS_url`                 | URL of the RSS feed.                               | `https://rsshub.app`|
 | `RSS_key`                 | key of your self-hosted rsshub. url->url/SOMEROUTE?key={key} If you don't know what is it, just leave it empty.                               | `123`|
 | `enable_email_notify`      | Whether to notify downloading result via email  (1 enable, 0 disable)  | `1` |
@@ -54,8 +61,8 @@ fredyu13/pybilibackup:latest
 | `od_client_id`      | onedrive app client id  | `114514`  |
 | `od_client_secret`      | onedrive app client secret value | `114514`  |
 | `od_redirect_uri`      | onedrive app redirect_ur  | `http://localhost:9001`  |
-| `od_upload_dir`      | which onedrive dir to upload sheets to relative to the root, do NOT start with '/'  | `halycon_sheets`  |
-| `BiliBili_ufid`      |  [[uid1, fid1, max_eps], [uid2, fid2, max_eps], ...]                                                                         |
+| `od_upload_dir`      | which onedrive dir to upload sheets to relative to the root, do NOT start with '/'  | `bili_backup`  |
+| `BiliBili_users`      |  first fill in the given example yaml locally, then run the dump_yaml_to_json.py locally, finally paste the json in str format into the screct value                                                                         | json-like| |
 
 
 ## Develop
@@ -89,7 +96,7 @@ For github action:
 2. Follow [Run locally](#Run-locally) (clone your own repo) to run once.
 3. Check if the token file generates successfully, and push the code with token file to your repo.
 ```bash
-git add _refresh_token && git commit -m "add token" && git push
+git add _refresh_token && git commit -m "add token" && git push -f
 ```
 4. Follow [Use Github Action](#Use-Github-Action)
 
