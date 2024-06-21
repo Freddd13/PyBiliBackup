@@ -24,8 +24,6 @@ class RClone(BaseRequest):
     def check_rclone_port(self, port):
         try:
             response = subprocess.run("ps -A | grep rclone", shell=True, capture_output=True, text=True)
-
-            print(response.stdout)
             if f"rclone" in response.stdout:
                 return True
             else:
