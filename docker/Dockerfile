@@ -29,7 +29,7 @@ mv /root/rclone.conf /root/.config/rclone/rclone.conf
 # RUN crontab /etc/cron.d/my-cron-job
 
 # 让cron在前台运行
-# CMD cron && tail -f /var/log/cron.log
+CMD cron && tail -f /var/log/cron.log
 # CMD ["python", "main.py"]
 CMD ["sh", "-c", "python3 main.py >> /app/app.log 2>&1"]
 
