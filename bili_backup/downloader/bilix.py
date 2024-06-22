@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:04:14
 LastEditors: Kumo
-LastEditTime: 2024-06-21 22:22:32
+LastEditTime: 2024-06-22 17:17:27
 Description: 
 '''
 
@@ -50,9 +50,12 @@ class Bilix(BaseDownloader, metaclass=SingletonMeta):
     def download_video(self, video_link:str, path:str) -> bool:
         if not os.path.exists(path):
             os.makedirs(path)
-            
-        asyncio.run(self.download_video_action(video_link, path))
-        return True
+        try:
+            asyncio.run(self.download_video_action(video_link, path))
+            return True
+        except Exception as e:
+            logger.error(f"Fail to download {video_link}: {str(e)}")
+            return False
             
 
     def download_videos(self, video_links:list, path:str) -> bool:

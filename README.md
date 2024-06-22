@@ -148,6 +148,7 @@ The onedrive needs a login for the first time, after that the token will be save
 - [x] rclone for local
 - [x] rclone for docker
 - [ ] rclone for github action
+- [ ] download with cookie
 - [ ] add retry history failed videos
 - [ ] config from gist
 - [ ] backup summary

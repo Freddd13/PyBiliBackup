@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:31
 LastEditors: Kumo
-LastEditTime: 2024-06-22 17:06:56
+LastEditTime: 2024-06-22 17:17:35
 Description: 
 '''
 from bili_backup.cloudreve import Cloudreve
@@ -158,7 +158,8 @@ def main(strategy):
                             logger.error(f"Failed to get video metadata for video [{video_meta.title}]: {str(e)}")
                             all_eps_ok = False
                             all_tasks_success = False
-                            continue
+                            # continue
+                            # 有时似乎返回视频信息失效，但实际并未失效
 
                         #### skip videos with many eps
                         num_eps = len(video_info_fetched.pages)
