@@ -31,7 +31,7 @@ mv /root/rclone.conf /root/.config/rclone/rclone.conf
 # 让cron在前台运行
 CMD cron && tail -f /var/log/cron.log
 # CMD ["python", "main.py"]
-CMD ["sh", "-c", "python3 main.py >> /app/app.log 2>&1"]
+# CMD ["sh", "-c", "python3 main.py >> /app/app.log 2>&1"]
 
 
 # docker build -t auto-halcyon -f docker/Dockerfile .

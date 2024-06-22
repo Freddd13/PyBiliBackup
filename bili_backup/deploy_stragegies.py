@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:44
 LastEditors: Kumo
-LastEditTime: 2024-06-21 14:46:39
+LastEditTime: 2024-06-22 10:37:07
 Description: 
 '''
 from .utils.logger import LoggerManager
@@ -67,6 +67,7 @@ class GithubActionStrategy(BaseStrategy):
         self.enable_rclone_upload = bool(os.environ.get('enable_rclone_upload'))
         self.rclone_upload_dir = os.environ.get('rclone_upload_dir')
 
+        print("!!!!!", self.enable_rclone_upload, self.rclone_upload_dir)
         # bilibili
         bilibili_users_str = os.environ.get('BiliBili_users')
         assert bilibili_users_str
