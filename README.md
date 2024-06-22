@@ -20,7 +20,7 @@ If you feel it is unstable, the docker or local method is preferred for you, see
 1. Fork the repo
 2. Config your data. Clone your repo or open it in the codespace, copy the localconfig.yaml as `.localconfig.yaml`, fill in your data, then run `python dummp_yaml_to_json.py`. Copy the content in the generated `.localconfig.json`. We need to set 2 secrets for github action(if you use rclone, otherwise just the first one), switch to your repo, find `Repo Settings -- Secrets and variables -- Actions -- Secrets`, set the following secrets:
 - Name: `raw_config`, Secrect: the content you copied from `.localconfig.json` just now(no larger than 48KB).
-- (only set when using rclone) Name: `rclone_conf_content`, Secrect: your rclone.conf raw content(no larger than 48KB).
+- (only set when using rclone) Name: `rclone_conf_content`, Secrect: your rclone.conf raw content's `base64` encoding(no larger than 48KB). You can use `cvt_rclone.py` to generate it.
 
     Check out [User config](#User-config) for the full config we need.
     ![](docs/add_secrets.png)
@@ -154,7 +154,7 @@ The onedrive needs a login for the first time, after that the token will be save
 - [x] fix bug when remaining history files
 - [x] rclone for local
 - [x] rclone for docker
-- [ ] rclone for github action
+- [x] rclone for github action
 - [ ] download with cookie
 - [ ] record failed videos
 - [ ] add retry history failed videos
