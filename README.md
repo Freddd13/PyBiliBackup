@@ -11,7 +11,8 @@ Mainly designed for github action on public repos, the database file is simply e
 ## Usage
 
 ### Use Github Action
-> You need [a onedrive with API](#About-Onedrive) to save your backup data(Otherwise why you choose this method??).
+> If you use onedrive API, [a onedrive with API](#About-Onedrive) is required to save your backup data.
+> If you use rclone, you need to copy the content rclone.conf into the according secrect).
 
 1. Fork the repo
 2. Use your own information to set the needed secrets in your repo(Repo Settings -- Secrets and variables -- Actions -- Secrets). You need an email with SMTP host, port, account and app password. Check out [User config](#User-config) for the full config we need.
@@ -70,7 +71,8 @@ docker run -d --name pybilibackup \
 | `od_redirect_uri`      | onedrive app redirect_ur  | `http://localhost:9001`  |
 | `od_upload_dir`      | which onedrive dir to save backup files(relative to the root, do NOT start with '/')  | `bili_backup`  |
 | `enable_rclone_upload`      | whether to use rclone to backup to  remote (1 enable, 0 disable)  | `1`  |
-| `od_upload_dir`      |  rclone drive path  | `onedrive-remote:/test_rclone`  |
+| `rclone_upload_dir`      |  rclone drive path  | `onedrive-remote:/test_rclone`  |
+| `rclone_conf_content`      |  rclone conf data  | raw conf copy from rclone.conf  |
 | `BiliBili_users`      |  first fill in the given example yaml locally, then run the dump_yaml_to_json.py locally, finally paste the json in str format into the screct value                                                                         | json-like| |
 
 

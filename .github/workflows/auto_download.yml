@@ -62,7 +62,12 @@ jobs:
       run: pip install -r requirements.txt
 
     - name: Install ffmpeg
-      run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      run: sudo apt-get update && sudo apt-get install -y ffmpeg rclone
+
+    - name: Set up Rclone config
+      run: |
+        mkdir -p ~/.config/rclone
+        echo "${{ secrets.rclone_conf_content }}" > ~/.config/rclone/rclone.conf
 
     - name: Run Python script
       run: python main.py
