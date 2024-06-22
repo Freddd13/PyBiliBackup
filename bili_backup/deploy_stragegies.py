@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:44
 LastEditors: Kumo
-LastEditTime: 2024-06-22 10:54:42
+LastEditTime: 2024-06-22 10:57:22
 Description: 
 '''
 from .utils.logger import LoggerManager
@@ -48,7 +48,7 @@ class GithubActionStrategy(BaseStrategy):
         self.rss_url = os.environ.get('RSS_url')
         self.rss_url_key = os.environ.get('RSS_url_key')
 
-        self.enable_email_notify = bool(os.environ.get('enable_email_notify'))
+        self.enable_email_notify = bool(int(os.environ.get('enable_email_notify')))
         self.sender = os.environ.get('Email_sender')
         self.receivers = [os.environ.get('Email_receivers')] # TODO
         self.smtp_host = os.environ.get('Email_smtp_host')
@@ -57,19 +57,17 @@ class GithubActionStrategy(BaseStrategy):
         self.send_logs = os.environ.get('Email_send_logs') 
 
         # onedrive
-        self.enable_od_upload = bool(os.environ.get('enable_od_upload'))
+        self.enable_od_upload = bool(int(os.environ.get('enable_od_upload')))
         self.od_client_id = os.environ.get('od_client_id')
         self.od_client_secret = os.environ.get('od_client_secret')
         self.od_redirect_uri = os.environ.get('od_redirect_uri')
         self.od_upload_dir =  os.environ.get('od_upload_dir')
 
         # rclone
-        self.enable_rclone_upload = bool(os.environ.get('enable_rclone_upload'))
+        self.enable_rclone_upload = bool(int(os.environ.get('enable_rclone_upload')))
         self.rclone_upload_dir = os.environ.get('rclone_upload_dir')
 
-        print(os.environ.get('enable_od_upload'))
 
-        print("!!!!!", self.enable_rclone_upload, self.enable_od_upload)
         # bilibili
         bilibili_users_str = os.environ.get('BiliBili_users')
         assert bilibili_users_str
