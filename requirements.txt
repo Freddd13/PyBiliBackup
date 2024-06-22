@@ -1,0 +1,11 @@
+feedparser
+requests
+pytz
+msal
+tqdm
+pyyaml
+microsoftgraph-python
+bilix
+bs4
+colorlog
+cryptography

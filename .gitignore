@@ -1,0 +1,44 @@
+/**/.vscode
+/**/.idea
+
+# =========CPP=======
+/**/build
+/**/log
+
+# =========Python=======
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+env/
+build/
+dist/
+*.log
+
+# pyenv
+.python-version
+
+# dotenv
+.env
+
+# virtualenv
+.venv/
+venv/
+ENV/
+
+
+
+# =========== this =============
+.localconfig.yaml
+.localconfig.json
+.last_success_time
+.subscriptions
+
+*.key
+files/
+old/
+test/
+*.db
