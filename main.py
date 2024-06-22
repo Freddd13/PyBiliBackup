@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:31
 LastEditors: Kumo
-LastEditTime: 2024-06-21 23:23:30
+LastEditTime: 2024-06-22 17:06:56
 Description: 
 '''
 from bili_backup.cloudreve import Cloudreve
@@ -152,7 +152,13 @@ def main(strategy):
                             continue
 
                         #### get info first (currently use bilix api)
-                        video_info_fetched = downloader.get_video_metadata(video_meta.link)
+                        try:
+                            video_info_fetched = downloader.get_video_metadata(video_meta.link)
+                        except Exception as e:
+                            logger.error(f"Failed to get video metadata for video [{video_meta.title}]: {str(e)}")
+                            all_eps_ok = False
+                            all_tasks_success = False
+                            continue
 
                         #### skip videos with many eps
                         num_eps = len(video_info_fetched.pages)
