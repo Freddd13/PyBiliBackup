@@ -15,22 +15,25 @@ ENV BILIBILI_BACKUP_ENV=DOCKER
 
 # 使用cron作为定时器
 # 安装cron并设置定时任务
-RUN apt-get update && apt-get -y install cron ffmpeg
+RUN apt-get update && apt-get -y install cron ffmpeg rclone
 RUN chmod 777 /var/run
 RUN printenv > /etc/environment
 
 COPY ./docker/crontab /etc/cron.d/my-cron-job
-RUN chmod 0644 /etc/cron.d/my-cron-job
-RUN touch /var/log/cron.log
-RUN crontab /etc/cron.d/my-cron-job
+COPY ./docker/rclone.conf /root/
+RUN mkdir -p /root/.config/rclone && \
+mv rclone.conf /root/.config/rclone/rclone.conf
+
+# RUN chmod 0644 /etc/cron.d/my-cron-job
+# RUN touch /var/log/cron.log
+# RUN crontab /etc/cron.d/my-cron-job
 
 # 让cron在前台运行
-CMD cron && tail -f /var/log/cron.log
-# CMD ["python", "main.py"]
+# CMD cron && tail -f /var/log/cron.log
+CMD ["python", "main.py"]
 
 
 # docker build -t auto-halcyon -f docker/Dockerfile .
 # docker run -d --name auto_halcyon --restart always --user $(id -u):$(id -g) -v $(pwd)/.localconfig.yaml:/app/.localconfig.yaml auto-halcyon:latest
 
 # docker run -d --name auto_halcyon auto-halcyon:latest
-
