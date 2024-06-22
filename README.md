@@ -35,16 +35,18 @@ wget https://github.com/Freddd13/pybilibackup/blob/main/localconfig.yaml?raw=tru
 ```
 2. Replace your own data in the yaml above. Check out [User config](#User-config) for the full config we need.
 3. Download image and run:
-```
+```bash
 mkdir -p pybilibackup/files pybilibackup/database
 
 docker run -d --name pybilibackup \
--v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
--v $(pwd)/pybilibackup/files:/app/files \
--v $(pwd)/pybilibackup/database:/app/database \
-fredyu13/pybilibackup:latest
+  -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
+  -v $(pwd)/pybilibackup/rclone.conf:/root/.config/rclone/rclone.conf \
+  -v $(pwd)/pybilibackup/files:/app/files \
+  -v $(pwd)/pybilibackup/database:/app/database \
+  -v $(pwd)/pybilibackup/database:/app/database \
+  fredyu13/pybilibackup:latest
 
-# docker exec -it {container_id} /bin/bash 
+# docker exec -it {container_id} /bin/bash # (optional) enter container to check
 ```
 
 ### User config(For Github Action Secrets, but it's similar for yaml)
@@ -100,6 +102,36 @@ The code in this repo can automatically start rclone rcd. But it's still recomme
 nohup rclone rcd --rc-no-auth >/dev/null 2>&1 &
 ```
 
+#### Rclone in docker
+1. install and config rclone on you host
+2. copy your local rclone config for docker usage
+```bash
+cat ~/.config/rclone/rclone.conf > pybilibackup/rclone.conf
+```
+3. run docker once
+```bash
+docker run -d --name pybilibackup \
+  -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
+  -v $(pwd)/pybilibackup/rclone.conf:/root/.config/rclone/rclone.conf \
+  -v $(pwd)/pybilibackup/files:/app/files \
+  -v $(pwd)/pybilibackup/database:/app/database \
+  -v $(pwd)/pybilibackup/database:/app/database \
+  fredyu13/pybilibackup:latest
+
+```
+4. add task to crontab
+```bash
+crontab -e
+```
+add the following:
+```bash
+0 2 * * * /usr/bin/docker start pybilibackup
+```
+
+check crontab:
+```bash
+crontab -l
+```
 
 
 ### About Onedrive
@@ -124,6 +156,7 @@ git add _refresh_token && git commit -m "add token" && git push -f
 - [x] fix bug when remaining history files
 - [x] rclone for local
 - [ ] rclone for docker
+- [ ] rclone for github action
 - [ ] add retry history failed videos
 - [ ] config from gist
 - [ ] backup summary
