@@ -12,7 +12,7 @@ Mainly designed for github action on public repos, the database file is simply e
 
 ### Use Github Action
 > If you use onedrive API, [a onedrive with API](#About-Onedrive) is required to save your backup data.
-> If you use rclone, you need to copy the content rclone.conf into the according secrect).
+> If you use rclone, you need to copy the content rclone.conf into the according secrect.
 
 1. Fork the repo
 2. Use your own information to set the needed secrets in your repo(Repo Settings -- Secrets and variables -- Actions -- Secrets). You need an email with SMTP host, port, account and app password. Check out [User config](#User-config) for the full config we need.
@@ -28,27 +28,53 @@ Note that sometimes(or in most time, maybe related to VM's IP) when running via 
 If you feel it is unstable, the docker or local method is preferred for you, see the content below.
 
 ### Use Docker
-> rclone is not supported yet
-
 1. Download the config file:
 ```
-wget https://github.com/Freddd13/pybilibackup/blob/main/localconfig.yaml?raw=true -O .localconfig.yaml
+mkdir -p pybilibackup/files pybilibackup/database
+wget https://github.com/Freddd13/pybilibackup/blob/main/localconfig.yaml?raw=true -O pybilibackup/.localconfig.yaml
 ```
 2. Replace your own data in the yaml above. Check out [User config](#User-config) for the full config we need.
 3. Download image and run:
-```bash
-mkdir -p pybilibackup/files pybilibackup/database
+- option1: using onedrive API:
+    ```bash
+    docker run -d --name pybilibackup \
+    -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
+    -v $(pwd)/pybilibackup/files:/app/files \
+    -v $(pwd)/pybilibackup/database:/app/database \
+    fredyu13/pybilibackup:latest
+    ```
+- option2: using rclone:
+    - 3.1 install and config rclone on you host
+    - 3.2 copy your local rclone config for docker usage
+    ```bash
+    cat ~/.config/rclone/rclone.conf > pybilibackup/rclone.conf
+    ```
+    - 3.3 run docker once
+    ```bash
+    docker run -d --name pybilibackup \
+    -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
+    -v $(pwd)/pybilibackup/rclone.conf:/root/.config/rclone/rclone.conf \
+    -v $(pwd)/pybilibackup/files:/app/files \
+    -v $(pwd)/pybilibackup/database:/app/database \
+    -v $(pwd)/pybilibackup/database:/app/database \
+    fredyu13/pybilibackup:latest
 
-docker run -d --name pybilibackup \
-  -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
-  -v $(pwd)/pybilibackup/rclone.conf:/root/.config/rclone/rclone.conf \
-  -v $(pwd)/pybilibackup/files:/app/files \
-  -v $(pwd)/pybilibackup/database:/app/database \
-  -v $(pwd)/pybilibackup/database:/app/database \
-  fredyu13/pybilibackup:latest
+    ```
+4. add task to crontab
+    ```bash
+    crontab -e
+    ```
 
-# docker exec -it {container_id} /bin/bash # (optional) enter container to check
-```
+    add the following cmd:
+    ```bash
+    0 2 * * * /usr/bin/docker start pybilibackup
+    ```
+
+    check crontab:
+    ```bash
+    crontab -l
+    ```
+
 
 ### User config(For Github Action Secrets, but it's similar for yaml)
 | Variable                  | Description                                         | Example Value          |
@@ -94,61 +120,25 @@ The schedule task can be adjusted by modifing the ./docker/crontab.
 
 ## Note
 ### About RSS
-Currently the repo depends on [MMS user route rss from RSSHub](https://docs.rsshub.app/routes/social-media#youtube-user). It's recommended to replace the domain with your self-hosted rsshub url, because the public hub can sometimes be banned by source sites. Besides, self-hosting one is quite benefit for your other future usage. If you don't have one, you can use the default url `https://rsshub.app/`.
+Currently the repo depends on [Bilibili RSS from RSSHub](https://docs.rsshub.app/routes/social-media#up-%E4%B8%BB%E9%9D%9E%E9%BB%98%E8%AE%A4%E6%94%B6%E8%97%8F%E5%A4%B9). It's recommended to replace the domain with your self-hosted rsshub url, because the public hub can sometimes be banned by source sites. Besides, self-hosting one is quite benefit for your other future usage. If you don't have one, you can use the default url `https://rsshub.app/`.
 For more info, please check [RSSHub doc](https://docs.rsshub.app/).
-
-### About Rclone
-First you need to config your remote drive.
-The code in this repo can automatically start rclone rcd. But it's still recommended to manually start before running the backup:
-```bash
-nohup rclone rcd --rc-no-auth >/dev/null 2>&1 &
-```
-
-#### Rclone in docker
-1. install and config rclone on you host
-2. copy your local rclone config for docker usage
-```bash
-cat ~/.config/rclone/rclone.conf > pybilibackup/rclone.conf
-```
-3. run docker once
-```bash
-docker run -d --name pybilibackup \
-  -v $(pwd)/pybilibackup/.localconfig.yaml:/app/.localconfig.yaml \
-  -v $(pwd)/pybilibackup/rclone.conf:/root/.config/rclone/rclone.conf \
-  -v $(pwd)/pybilibackup/files:/app/files \
-  -v $(pwd)/pybilibackup/database:/app/database \
-  -v $(pwd)/pybilibackup/database:/app/database \
-  fredyu13/pybilibackup:latest
-
-```
-4. add task to crontab
-```bash
-crontab -e
-```
-add the following:
-```bash
-0 2 * * * /usr/bin/docker start pybilibackup
-```
-
-check crontab:
-```bash
-crontab -l
-```
 
 
 ### About Onedrive
-Currently the repo only supports uploading via onedrive API, though rclone maybe supported in the future.
-To save to onedrive, you need to create an app in [Azure](https://portal.azure.com/#home). Note that currently only onedrive business international is tested.
+Currently the repo supports uploading to onedrive both from API and rclone(rclone maybe more stable).
+- To save to onedrive via API, you need to create an app in [Azure](https://portal.azure.com/#home). Note that currently only onedrive business international is tested.
 Check out [here](bili_backup/onedrive/README.md) for detailed instructions of getting required data.
 The onedrive needs a login for the first time, after that the token will be saved to `_refresh_token`. As I have no idea how to receive auth callback in github action, the code assumes there's already a token file with token. Thus you need to run on local first to generate the token file. 
-For github action:
-1. Fork this repo,
-2. Follow [Run locally](#Run-locally) (clone your own repo) to run once.
-3. Check if the token file generates successfully, and push the code with token file to your repo.
-```bash
-git add _refresh_token && git commit -m "add token" && git push -f
-```
-4. Follow [Use Github Action](#Use-Github-Action)
+    For github action:
+    1. Fork this repo,
+    2. Follow [Run locally](#Run-locally) (clone your own repo) to run once.
+    3. Check if the token file generates successfully, and push the code with token file to your repo.
+    ```bash
+    git add _refresh_token && git commit -m "add token" && git push -f
+    ```
+    4. Follow [Use Github Action](#Use-Github-Action)
+
+- To save to onedrive via rclone. Just install and config rclone. If you deploy locally, just enable rclone in the config. If you use docker or github action, just copy the config file or content according to the instructions.
 
 
 
@@ -157,7 +147,7 @@ git add _refresh_token && git commit -m "add token" && git push -f
 - [x] fix local storage check
 - [x] fix bug when remaining history files
 - [x] rclone for local
-- [ ] rclone for docker
+- [x] rclone for docker
 - [ ] rclone for github action
 - [ ] add retry history failed videos
 - [ ] config from gist
