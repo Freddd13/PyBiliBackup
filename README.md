@@ -105,7 +105,7 @@ wget https://github.com/Freddd13/pybilibackup/blob/main/localconfig.yaml?raw=tru
 | `onedrive/od_upload_dir`      | which onedrive dir to save backup files(relative to the root, do NOT start with '/')  | `bili_backup`  |
 | `rclone/enable_rclone_upload`      | whether to use rclone to backup to  remote (1 enable, 0 disable)  | `1`  |
 | `rclone/rclone_upload_dir`      |  rclone drive path  | `onedrive-remote:/test_rclone`  |
-| `rclone/rclone_conf_content`      |  rclone conf data  | raw conf copy from rclone.conf  |
+| `rclone/rclone_conf_content`      |  rclone conf data encoded by base64  | str within 48KB  |
 | `BiliBili/BiliBili_users`      |  first fill in the given example yaml locally, then run the dump_yaml_to_json.py locally, finally paste the json in str format into the screct value                                                                         | json-like| |
 
 
