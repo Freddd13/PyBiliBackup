@@ -1,6 +1,6 @@
 # PyBiliBackup
 Automatically backup bilibili videos in your collections.
-
+> Availability: fixed on 2024-12-19, work on my personal remote machine via docker container + rclone method
 
 ## Method
 Use RSS to get new videos and bilix to download videos, finally we can upload them to onedrive.
