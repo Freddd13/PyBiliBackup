@@ -1,9 +1,13 @@
 '''
 Date: 2023-10-23 18:04:14
 LastEditors: Kumo
-LastEditTime: 2024-06-22 17:17:27
+LastEditTime: 2024-12-19 18:55:05
 Description: 
 '''
+import os
+import sys
+sys.path.insert(0, os.path.dirname(__file__))
+print(sys.path)
 
 import httpx
 import asyncio

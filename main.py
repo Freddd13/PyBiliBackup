@@ -1,7 +1,7 @@
 '''
 Date: 2023-10-23 18:24:31
 LastEditors: Kumo
-LastEditTime: 2024-06-27 09:34:04
+LastEditTime: 2024-12-19 18:55:15
 Description: 
 '''
 from bili_backup.cloudreve import Cloudreve
@@ -14,7 +14,7 @@ from bili_backup.utils.logger import LoggerManager
 from bili_backup.utils.utils import legal_title
 from bili_backup.rss_sources.user_stars import UserStarsHandler
 
-from bili_backup.downloader.bilix import Bilix
+from bili_backup.downloader.bilix_api import Bilix
 
 from bili_backup.onedrive.onedrive import OnedriveManager
 from bili_backup.uploader.onedrive import Onedrive
