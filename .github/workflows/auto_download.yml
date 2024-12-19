@@ -32,7 +32,9 @@ jobs:
         python-version: 3.x  # 指定 Python 版本
 
     - name: Install dependencies
-      run: pip install -r requirements.txt
+      run: |
+        pip install -r requirements.txt
+        pip uninstall bilix
 
     - name: Install ffmpeg
       run: sudo apt-get update && sudo apt-get install -y tree ffmpeg rclone
